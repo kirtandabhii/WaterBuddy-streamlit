@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>WaterBuddy storage</title>
+</head>
+<body>
+<script>
+// Keeps WaterBuddy's data in this browser's localStorage. Nothing is sent anywhere.
+// On the first render it sends back what was saved last time; after that it writes whatever
+// the app passes as `save` ("__clear__" deletes everything).
+(function () {
+  var KEY = "waterbuddy-streamlit-v1";
+  var loaded = false;
+  var last = null;
+  function send(type, data) {
+    var msg = { isStreamlitMessage: true, type: type };
+    for (var k in data) msg[k] = data[k];
+    window.parent.postMessage(msg, "*");
+  }
+  window.addEventListener("message", function (event) {
+    var d = event.data;
+    if (!d || d.type !== "streamlit:render") return;
+    var args = d.args || {};
+    if (!loaded) {
+      loaded = true;
+      var value = null;
+      try { value = JSON.parse(window.localStorage.getItem(KEY) || "null"); } catch (e) { value = null; }
+      send("streamlit:setComponentValue", { value: { loaded: true, data: value }, dataType: "json" });
+    }
+    if (args.save === undefined || args.save === null) return;
+    try {
+      if (args.save === "__clear__") { window.localStorage.removeItem(KEY); last = null; return; }
+      var text = JSON.stringify(args.save);
+      if (text !== last) { window.localStorage.setItem(KEY, text); last = text; }
+    } catch (e) {
+      // Private mode or storage turned off: the app still works for this visit.
+    }
+  });
+  send("streamlit:componentReady", { apiVersion: 1 });
+  send("streamlit:setFrameHeight", { height: 0 });
+})();
+</script>
+</body>
+</html>

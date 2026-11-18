@@ -1,0 +1,32 @@
+# The look of Ripple's forest spring: pond ink, jade water and mist, with fonts chosen to stay
+# readable for young children and older adults (Atkinson Hyperlegible) and a friendly serif for headings.
+[theme]
+base = "light"
+primaryColor = "#136866"
+backgroundColor = "#eef5f0"
+secondaryBackgroundColor = "#e1eee6"
+textColor = "#123a40"
+linkColor = "#146b6a"
+borderColor = "#cfe0d6"
+showWidgetBorder = true
+baseRadius = "14px"
+buttonRadius = "16px"
+baseFontSize = 17
+font = "Atkinson Hyperlegible Next:https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;700&display=swap, sans-serif"
+headingFont = "Young Serif:https://fonts.googleapis.com/css2?family=Young+Serif&display=swap, serif"
+codeFont = "Atkinson Hyperlegible Mono:https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;600&display=swap, monospace"
+headingFontWeights = 400
+
+[theme.sidebar]
+backgroundColor = "#f7fbf8"
+secondaryBackgroundColor = "#e6f1ea"
+
+[server]
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+# Bare function calls (like toast(...)) must not print their return value on the page.
+[runner]
+magicEnabled = false

@@ -1,0 +1,337 @@
+/* WaterBuddy: Ripple's forest spring fills the screen; the tracker floats over it on frosted glass.
+   Colours come from the 3D scene itself: pond ink, jade water, Ripple's aqua, moss, bamboo and mist.
+   Fonts (Young Serif, Atkinson Hyperlegible Next and Mono) are loaded by .streamlit/config.toml.
+   Every rule for our own HTML starts with .stMarkdown so it outranks Streamlit's own paragraph styles. */
+:root {
+  --ink: #0f3439;
+  --ink-soft: #3f5f63;
+  --jade: #1e8c8a;
+  --jade-deep: #136866;
+  --aqua: #5fd3d0;
+  --moss: #3a6522;            /* 5.0:1 on a panel over the darkest scene colour */
+  --bamboo: #c9a24a;
+  /* Panels are at least 88% opaque: secondary text stays above 4.5:1 even over the scene's darkest shadows. */
+  --glass: rgba(247, 252, 250, 0.88);
+  --glass-strong: rgba(250, 253, 251, 0.94);
+  --glass-edge: rgba(255, 255, 255, 0.78);
+  --line: rgba(15, 52, 57, 0.14);
+  --serif: "Young Serif", Georgia, serif;
+  --mono: "Atkinson Hyperlegible Mono", ui-monospace, monospace;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 34px 70px -34px rgba(6, 34, 38, 0.65);
+}
+
+/* ---------- The world behind everything ---------- */
+/* Soft aqua behind the spring while it loads (and the still picture when 3D is off). */
+.stApp { background: linear-gradient(160deg, #c3ece8 0%, #9fd6c8 48%, #cdebd6 100%); }
+[data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stHeader"], [data-testid="stBottom"] { background: transparent; }
+[data-testid="stToolbar"] { display: none; }
+[data-testid="stMainBlockContainer"] { position: relative; z-index: 0; max-width: 1320px; padding-top: 1.4rem; padding-bottom: 3rem; }
+
+.st-key-stage, .st-key-stage-explore { position: fixed; inset: 0; z-index: -1; margin: 0 !important; }
+.st-key-stage iframe, .st-key-stage-explore iframe {
+  position: fixed; inset: 0; width: 100vw !important; height: 100vh !important; border: 0; pointer-events: auto;
+}
+.stMarkdown .wb-backdrop { position: fixed; inset: -40px; z-index: -1; background-size: cover; background-position: center; }
+.wb-blur .st-key-stage iframe { filter: blur(14px) saturate(1.15); transform: scale(1.06); }
+
+/* Let taps and drags reach the spring wherever no panel covers it. */
+[data-testid="stMainBlockContainer"], [data-testid="stMain"] [data-testid="stVerticalBlock"],
+[data-testid="stMain"] [data-testid="stHorizontalBlock"], [data-testid="stMain"] [data-testid="stColumn"],
+[data-testid="stMain"] [data-testid="stElementContainer"], [data-testid="stMain"] [data-testid="stLayoutWrapper"] { pointer-events: none; }
+[data-testid="stMain"] [class*="st-key-glass"], [data-testid="stMain"] [class*="st-key-glass"] *,
+[data-testid="stMain"] .stAlert, [data-testid="stMain"] .stAlert * { pointer-events: auto; }
+
+/* ---------- Glass ---------- */
+[class*="st-key-glass"] {
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  border-radius: 30px;
+  padding: 26px 28px 24px;
+  box-shadow: var(--shadow);
+  animation: wb-in 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+/* Real blur only on the few panels that sit over the busiest part of the spring (cheap phones carry the 3D too). */
+.st-key-glass-top, .st-key-glass-today, .st-key-glass-welcome, .st-key-glass-quest, .st-key-glass-dock {
+  -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%);
+}
+.st-key-glass-top { padding: 8px 12px 8px 22px; border-radius: 999px; animation-delay: 0s; }
+.st-key-glass-today, .st-key-glass-welcome, .st-key-glass-quest { animation-delay: 0.08s; }
+.st-key-glass-goal, .st-key-glass-chart { animation-delay: 0.16s; }
+.st-key-glass-log, .st-key-glass-entries { animation-delay: 0.22s; }
+@keyframes wb-in { from { opacity: 0; transform: translateY(18px) scale(0.985); } to { opacity: 1; transform: none; } }
+/* The Atlas quest card leaves once all four things are found. */
+@keyframes wb-quest-out { to { opacity: 0; transform: translateY(-10px) scale(0.97); visibility: hidden; } }
+
+[data-testid="stSidebar"] { background: rgba(247, 252, 250, 0.94); border-right: 1px solid var(--glass-edge); }
+[data-testid="stSidebar"] > div { background: transparent; }
+/* Notices: a small dark capsule that drops in under the top bar, centred, so it never covers the buttons. */
+[data-testid="stToastContainer"] {
+  top: 104px !important; bottom: auto !important; left: 16px !important; right: 16px !important;
+  width: auto !important; max-width: 400px; margin: 0 auto !important; padding: 0 !important; transform: none !important;
+}
+[data-testid="stToastContainer"] ol { gap: 8px; }
+[data-testid="stToast"] {
+  width: 100% !important; height: auto !important; max-height: none !important; margin: 0 !important; padding: 10px 10px 10px 10px !important;
+  background: rgba(11, 40, 44, 0.94) !important; color: #eef8f6 !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important; border-radius: 22px !important;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 22px 44px -20px rgba(3, 22, 26, 0.75) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%);
+  animation: wb-toast-in 0.45s cubic-bezier(0.2, 1.3, 0.3, 1) both;
+}
+[data-testid="stToast"] > div { align-items: center !important; gap: 12px !important; }
+/* Streamlit clips long notices to one line; ours are two short lines, so show them whole. */
+[data-testid="stToast"] > div > div:has(> [data-testid="stToastText"]) {
+  flex: 1 1 auto; min-width: 0; height: auto !important; max-height: none !important; overflow: visible !important;
+}
+[data-testid="stToast"] [data-testid="stToastDynamicIcon"] {
+  display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; font-size: 1.15rem;
+  background: rgba(95, 211, 208, 0.16); box-shadow: 0 0 0 1px rgba(95, 211, 208, 0.28) inset;
+}
+/* Streamlit pulls markdown up by 1rem, which cut the second line off. */
+[data-testid="stToast"] [data-testid="stToastText"] [data-testid="stMarkdownContainer"] { margin-bottom: 0 !important; }
+[data-testid="stToast"] [data-testid="stToastText"] p {
+  margin: 0 !important; font-size: 0.9rem !important; line-height: 1.35 !important; color: rgba(238, 248, 246, 0.8) !important;
+}
+[data-testid="stToast"] [data-testid="stToastText"] strong {
+  display: inline-block; margin-bottom: 1px; font-family: var(--serif); font-weight: 400;
+  font-size: 1.04rem; letter-spacing: 0.01em; color: #ffffff;
+}
+[data-testid="stToast"] button[aria-label="Close"] { color: rgba(238, 248, 246, 0.55) !important; align-self: flex-start; }
+[data-testid="stToast"] button[aria-label="Close"]:hover { color: #ffffff !important; }
+@keyframes wb-toast-in { from { opacity: 0; transform: translateY(-14px) scale(0.96); } to { opacity: 1; transform: none; } }
+
+/* ---------- Top bar ---------- */
+.stMarkdown .wb-brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-size: 1.45rem; color: var(--ink); white-space: nowrap; }
+.stMarkdown .wb-date { text-align: right; font-family: var(--mono); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); white-space: nowrap; padding-right: 10px; }
+.st-key-nav [data-testid="stButtonGroup"] { justify-content: center; }
+.st-key-nav button { min-width: 104px; font-size: 1rem; padding: 0.45rem 1.1rem; background: transparent; border-color: transparent; border-radius: 999px !important; }
+.st-key-nav button[kind="segmented_controlActive"], .st-key-nav button[aria-checked="true"] { background: var(--ink); color: #ffffff; border-color: var(--ink); }
+
+/* ---------- Shared type ---------- */
+.stMarkdown .wb-eyebrow { font-family: var(--mono); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--jade-deep); margin: 0 0 0.35rem; }
+.stMarkdown .wb-lead { font-size: 1.12rem; line-height: 1.55; color: var(--ink-soft); margin: 0 0 0.6rem; }
+.stMarkdown .wb-h2 { font-family: var(--serif); font-size: 1.55rem; line-height: 1.15; color: var(--ink); margin: 0 0 0.5rem; }
+
+/* ---------- Ripple's speech bubble, floating in the world ---------- */
+.stMarkdown .wb-bubble {
+  position: relative; display: inline-block; max-width: 330px; margin: 6vh 0 0 18%;
+  padding: 16px 20px; border-radius: 24px 24px 24px 8px;
+  background: var(--glass-strong); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-edge); box-shadow: var(--shadow);
+  font-size: 1.12rem; line-height: 1.4; color: var(--ink);
+  animation: wb-bob 5s ease-in-out infinite, wb-in 0.8s 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.stMarkdown .wb-bubble b { display: block; font-family: var(--mono); font-weight: 600; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--jade-deep); margin-bottom: 4px; }
+.stMarkdown .wb-bubble::after { content: ""; position: absolute; left: 22px; bottom: -12px; width: 22px; height: 22px; background: var(--glass-strong); border-right: 1px solid var(--glass-edge); border-bottom: 1px solid var(--glass-edge); transform: skewX(28deg) rotate(45deg); border-radius: 0 0 6px 0; }
+@keyframes wb-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+
+/* ---------- Welcome ---------- */
+.stMarkdown .wb-welcome h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(2.3rem, 4.4vw, 3.6rem); line-height: 1.02; color: var(--ink); margin: 0.1rem 0 0.9rem; padding: 0; letter-spacing: -0.01em; }
+.stMarkdown .wb-welcome h1 em { font-style: normal; color: #14706e; }
+.stMarkdown .wb-promises { list-style: none; padding: 0; margin: 0.9rem 0 0.2rem; }
+.stMarkdown .wb-promises li { padding: 0.5rem 0; border-top: 1px solid var(--line); color: var(--ink); font-size: 1rem; }
+.stMarkdown .wb-promises li b { display: inline-block; width: 5.4em; font-family: var(--mono); font-weight: 600; font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--jade-deep); }
+
+[class*="st-key-age-"] button {
+  height: 96px; flex-direction: column; align-items: flex-start; justify-content: flex-end; gap: 2px;
+  background: #ffffff; border: 1.5px solid rgba(15, 52, 57, 0.22); border-radius: 18px; padding: 10px 10px 10px 12px; min-width: 0;
+  transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+}
+[class*="st-key-age-"] button p { font-family: var(--serif); font-size: 1.45rem; white-space: nowrap; line-height: 1; color: var(--ink); }
+[class*="st-key-age-"] button::after { font-family: var(--mono); font-weight: 600; font-size: 0.8rem; color: var(--ink-soft); white-space: nowrap; }
+/* Five tiles in one row were too narrow for "14–17"; three to a row keeps every range whole. */
+.st-key-ages [data-testid="stHorizontalBlock"] { flex-wrap: wrap !important; gap: 10px; }
+.st-key-ages [data-testid="stColumn"] { flex: 1 1 30% !important; min-width: 30% !important; }
+[class*="st-key-age-"] button:hover { transform: translateY(-3px); background: #f2fbf9; box-shadow: 0 14px 28px -18px rgba(6, 34, 38, 0.6); border-color: var(--jade); }
+
+/* ---------- Today: gauge and reading ---------- */
+.stMarkdown .wb-gauge { height: 330px; width: auto; display: block; margin: 0 auto; overflow: visible; }
+.wb-board { fill: rgba(255, 255, 255, 0.92); }
+.wb-board-edge { fill: none; stroke: var(--ink); stroke-width: 2.5; }
+.wb-water { animation: wb-rise 1.6s cubic-bezier(0.25, 0.8, 0.25, 1) both; }
+.wb-wave-back { fill: rgba(95, 211, 208, 0.5); animation: wb-drift 7s linear infinite reverse; }
+.wb-wave-front { fill: rgba(30, 140, 138, 0.66); animation: wb-drift 4.5s linear infinite; transform: translateY(4px); }
+.wb-mark line { stroke: var(--ink); stroke-width: 2; stroke-dasharray: 3 3; opacity: 0.35; }
+.wb-mark text { fill: var(--ink-soft); opacity: 0.6; }
+.wb-mark.on line { stroke: var(--moss); opacity: 1; stroke-dasharray: none; }
+.wb-mark.on text { fill: var(--moss); opacity: 1; }
+.wb-mark-big { font-family: var(--serif); font-size: 21px; }
+.wb-mark-ml { font-family: var(--mono); font-size: 12px; }
+.wb-still .wb-water, .wb-still .wb-wave { animation: none; }
+@keyframes wb-rise { from { transform: translateY(var(--from)); } to { transform: translateY(var(--to)); } }
+@keyframes wb-drift { from { transform: translateX(0); } to { transform: translateX(60px); } }
+
+.stMarkdown .wb-total { white-space: nowrap; font-family: var(--serif); font-size: clamp(3rem, 5.2vw, 4.6rem); line-height: 0.92; color: var(--ink); margin: 0.1rem 0 0; letter-spacing: -0.02em; }
+.stMarkdown .wb-total small { font-size: 0.3em; margin-left: 0.18em; color: var(--ink-soft); letter-spacing: 0; }
+.stMarkdown .wb-of { font-size: 1.12rem; color: var(--ink-soft); margin: 0.7rem 0 0.9rem; }
+.stMarkdown .wb-of b { color: var(--ink); }
+.stMarkdown .wb-bar { height: 8px; border-radius: 999px; background: rgba(15, 52, 57, 0.1); overflow: hidden; }
+.stMarkdown .wb-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--jade), var(--aqua)); transition: width 0.8s ease; }
+
+/* Drink buttons: vessels */
+.st-key-drinks button {
+  height: 82px; flex-direction: column; gap: 1px;
+  background: var(--jade-deep); border: 1.5px solid var(--jade-deep); border-radius: 20px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.st-key-drinks button p { font-family: var(--serif); font-size: 1.5rem; color: #ffffff; }
+.st-key-drinks button::after { font-family: var(--mono); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.03em; color: #ffffff; }
+.st-key-drinks button:hover { transform: translateY(-2px); background: var(--ink); box-shadow: 0 12px 24px -16px rgba(6, 34, 38, 0.6); }
+.st-key-custom-pop button { background: #ffffff; border-color: var(--ink); }
+.st-key-custom-pop button p, .st-key-custom-pop button::after { color: var(--ink); }
+.st-key-custom-pop button:hover { background: #f2fbf9; }
+.st-key-drinks button:active { transform: translateY(1px) scale(0.99); }
+.st-key-add-250 button, .st-key-pour-atlas button { background: var(--ink); border-color: var(--ink); }
+.st-key-add-250 button p, .st-key-add-250 button::after, .st-key-pour-atlas button p { color: #ffffff; }
+.st-key-add-250 button:hover, .st-key-pour-atlas button:hover { background: #072327; }
+.st-key-add-150 button::after { content: "Small glass"; }
+.st-key-add-250 button::after { content: "Glass"; }
+.st-key-add-500 button::after { content: "Bottle"; }
+.st-key-custom-pop button::after { content: "Any amount"; }
+.st-key-daytools button { border-color: transparent; background: transparent; }
+.st-key-daytools button p { font-size: 0.95rem; color: var(--ink-soft); }
+
+/* Keep the vessel buttons side by side on phones too. */
+.st-key-drinks [data-testid="stHorizontalBlock"] { flex-wrap: nowrap !important; }
+.st-key-drinks [data-testid="stColumn"] { min-width: 0 !important; width: auto !important; flex: 1 1 0 !important; }
+
+/* Goal and log */
+.stMarkdown .wb-compare { margin: 0.4rem 0 0.4rem; }
+.stMarkdown .wb-compare div { display: grid; grid-template-columns: 7.5em 1fr 4.2em; align-items: center; gap: 10px; margin: 6px 0; font-size: 0.95rem; color: var(--ink-soft); }
+.stMarkdown .wb-compare i { display: block; height: 10px; border-radius: 999px; background: rgba(15, 52, 57, 0.18); }
+.stMarkdown .wb-compare .you i { background: var(--jade); }
+.stMarkdown .wb-compare b { font-family: var(--mono); color: var(--ink); text-align: right; }
+.stMarkdown .wb-log { list-style: none; margin: 0; padding: 0; max-height: 300px; overflow-y: auto; }
+.stMarkdown .wb-log li { display: grid; grid-template-columns: 3.6em 1fr auto; gap: 10px; align-items: baseline; padding: 0.55rem 0; border-bottom: 1px dashed var(--line); font-size: 1rem; }
+.stMarkdown .wb-log li .wb-kind { color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.st-key-glass-entries .wb-kind-label { display: none; }
+.stMarkdown .wb-log li time { font-family: var(--mono); color: var(--ink-soft); }
+.stMarkdown .wb-log li b { color: var(--ink); }
+.stMarkdown .wb-log li.goal b { color: var(--moss); }
+.stMarkdown .wb-empty { color: var(--ink-soft); font-size: 1rem; margin: 0; }
+
+/* ---------- Atlas ---------- */
+.st-key-glass-quest { max-width: 470px; }
+.stMarkdown .wb-quest { display: flex; flex-wrap: wrap; gap: 8px; margin: 0.5rem 0 0; padding: 0; list-style: none; }
+.stMarkdown .wb-quest li { display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; border: 1.5px dashed rgba(15, 52, 57, 0.3); color: var(--ink-soft); font-size: 0.95rem; }
+.stMarkdown .wb-quest li i { width: 20px; height: 20px; border-radius: 50%; border: 1.5px dashed rgba(15, 52, 57, 0.3); display: grid; place-items: center; font-style: normal; font-size: 0.75rem; }
+.stMarkdown .wb-quest li.found { border-style: solid; border-color: var(--jade); color: var(--ink); background: rgba(95, 211, 208, 0.22); }
+.stMarkdown .wb-quest li.found i { border: none; background: var(--jade); color: #ffffff; }
+.stMarkdown .wb-count { font-family: var(--serif); font-size: 2.2rem; color: var(--ink); line-height: 1; margin: 0.4rem 0 0; }
+.stMarkdown .wb-count small { font-size: 0.45em; color: var(--ink-soft); }
+.st-key-glass-dock { position: fixed; right: 28px; bottom: 28px; width: min(400px, calc(100vw - 32px)); z-index: 5; padding: 18px 20px; }
+.st-key-pour-atlas button { height: 60px; }
+.st-key-pour-atlas button p { font-family: var(--serif); font-size: 1.3rem; }
+.stMarkdown .wb-dock-level { font-family: var(--serif); font-size: 1.9rem; color: var(--ink); margin: 0; line-height: 1.1; }
+.stMarkdown .wb-dock-level small { font-family: var(--mono); font-size: 0.42em; letter-spacing: 0.06em; color: var(--ink-soft); }
+
+/* ---------- Summary ---------- */
+.stMarkdown .wb-summary-head h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(2.1rem, 4.2vw, 3.2rem); line-height: 1.06; color: var(--ink); padding: 0; margin: 0.1rem 0 0.5rem; }
+.stMarkdown .wb-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border-top: 1.5px solid var(--ink); margin: 1.1rem 0 0; }
+.stMarkdown .wb-stats div { padding: 12px 14px 4px 0; }
+.stMarkdown .wb-stats div + div { padding-left: 14px; border-left: 1px solid var(--line); }
+.stMarkdown .wb-stats dt { font-family: var(--mono); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-soft); }
+.stMarkdown .wb-stats dd { margin: 6px 0 0; font-family: var(--serif); font-size: 1.8rem; color: var(--ink); }
+
+/* ---------- Sidebar ---------- */
+.stMarkdown .wb-tip { font-family: var(--serif); font-size: 1.12rem; line-height: 1.45; color: var(--ink); margin: 0 0 0.3rem; }
+.stMarkdown .wb-poster { width: 100%; border-radius: 26px; display: block; }
+
+/* ---------- The goal moment: droplets fall once, then the card fades ---------- */
+.stMarkdown .wb-splash { position: fixed; inset: 0; pointer-events: none; z-index: 999; overflow: hidden; }
+.stMarkdown .wb-splash i { position: absolute; top: -40px; width: 12px; height: 16px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--aqua); opacity: 0.9; animation: wb-fall 2.6s cubic-bezier(0.35, 0.1, 0.6, 1) forwards; }
+.stMarkdown .wb-splash i:nth-child(3n) { background: var(--jade); }
+.stMarkdown .wb-splash i:nth-child(4n) { background: var(--bamboo); }
+.stMarkdown .wb-splash p { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); margin: 0; padding: 20px 34px; border-radius: 24px; background: var(--glass-strong); box-shadow: var(--shadow); font-family: var(--serif); font-size: 1.8rem; color: var(--ink); white-space: nowrap; animation: wb-card 3.2s ease forwards; }
+@keyframes wb-fall { to { transform: translateY(110vh) rotate(25deg); opacity: 0.2; } }
+@keyframes wb-card { 0% { opacity: 0; transform: translate(-50%, -40%); } 12%, 75% { opacity: 1; transform: translate(-50%, -50%); } 100% { opacity: 0; transform: translate(-50%, -56%); } }
+
+/* ---------- Themes: the mood over the spring ---------- */
+.stMarkdown .wb-mood { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.stMarkdown .wb-firefly { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #fff7b0;
+  box-shadow: 0 0 10px 4px rgba(255, 240, 150, 0.75); animation: wb-firefly ease-in-out infinite alternate; }
+@keyframes wb-firefly { 0% { opacity: 0.1; transform: translate(0, 0); } 50% { opacity: 1; } 100% { opacity: 0.25; transform: translate(40px, -60px); } }
+.stMarkdown .wb-petal { position: absolute; top: -5% !important; width: 12px; height: 9px; border-radius: 80% 0 80% 0; background: #ffc3d8;
+  box-shadow: inset -2px -2px 0 rgba(214, 90, 140, 0.25); animation: wb-petal linear infinite; }
+@keyframes wb-petal { from { transform: translate(0, -5vh) rotate(0deg); } to { transform: translate(-12vw, 110vh) rotate(540deg); } }
+
+/* Pills: drink types, themes, age groups, and the page switcher. Streamlit marks the chosen one
+   with aria-checked="true"; its own styles are specific, so these need !important to win. */
+.st-key-kind_pick button, .st-key-theme_pick button, .st-key-age_pick button {
+  border-radius: 999px !important; background: #ffffff !important; border: 1.5px solid rgba(15, 52, 57, 0.18) !important; }
+.st-key-kind_pick button *, .st-key-theme_pick button *, .st-key-age_pick button * { color: var(--ink) !important; font-weight: 600; }
+.st-key-kind_pick button[aria-checked="true"], .st-key-theme_pick button[aria-checked="true"], .st-key-age_pick button[aria-checked="true"],
+.st-key-nav button[aria-checked="true"] { background: var(--jade-deep) !important; border-color: var(--jade-deep) !important; }
+.st-key-kind_pick button[aria-checked="true"] *, .st-key-theme_pick button[aria-checked="true"] *, .st-key-age_pick button[aria-checked="true"] *,
+.st-key-nav button[aria-checked="true"] * { color: #ffffff !important; }
+.st-key-nav button { border-color: transparent !important; background: transparent !important; }
+.st-key-nav button[aria-checked="true"] { background: var(--ink) !important; border-color: var(--ink) !important; }
+.st-key-kind_pick [data-testid="stButtonGroup"] { gap: 6px; }
+
+/* Insights */
+.stMarkdown .wb-notes { margin: 0; padding: 0; list-style: none; }
+.stMarkdown .wb-notes li { position: relative; padding: 0.6rem 0 0.6rem 1.6rem; border-bottom: 1px dashed var(--line); font-size: 1.04rem; line-height: 1.45; color: var(--ink); }
+.stMarkdown .wb-notes li::before { content: ""; position: absolute; left: 0.2rem; top: 1rem; width: 9px; height: 12px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: var(--jade); }
+.stMarkdown .wb-share div { grid-template-columns: 9.5em 1fr 3em; }
+.stMarkdown .wb-dots { display: grid; grid-template-columns: repeat(auto-fill, 30px); gap: 7px; list-style: none; margin: 0.3rem 0 0.6rem; padding: 0; }
+.stMarkdown .wb-dots li { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid rgba(15, 52, 57, 0.2); }
+.stMarkdown .wb-dots li span { font-family: var(--mono); font-size: 0.72rem; font-weight: 600; color: var(--ink-soft); }
+.stMarkdown .wb-dots li.half { background: linear-gradient(0deg, var(--aqua) 50%, transparent 50%); border-color: var(--jade); }
+.stMarkdown .wb-dots li.full { background: var(--jade-deep); border-color: var(--jade-deep); }
+.stMarkdown .wb-dots li.full span { color: #ffffff; }
+
+/* Badges */
+.stMarkdown .wb-badges { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; list-style: none; margin: 1rem 0 0; padding: 0; }
+.stMarkdown .wb-badges li { display: flex; flex-direction: column; gap: 4px; padding: 18px 16px 16px; border-radius: 22px; background: rgba(255, 255, 255, 0.55); border: 1.5px dashed rgba(15, 52, 57, 0.22); }
+.stMarkdown .wb-badges li b { font-family: var(--serif); font-weight: 400; font-size: 1.2rem; color: var(--ink); }
+.stMarkdown .wb-badges li small { font-size: 0.92rem; line-height: 1.35; color: var(--ink-soft); }
+.stMarkdown .wb-badges li em { margin-top: auto; padding-top: 6px; font-style: normal; font-family: var(--mono); font-weight: 600; font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-soft); }
+.stMarkdown .wb-badge-icon { width: 56px; height: 56px; border-radius: 50%; display: grid; place-items: center; font-size: 1.7rem; background: rgba(15, 52, 57, 0.06); filter: grayscale(1); opacity: 0.55; margin-bottom: 4px; }
+.stMarkdown .wb-badges li.earned { background: #ffffff; border: 1.5px solid var(--jade); box-shadow: 0 14px 30px -22px rgba(6, 34, 38, 0.7); }
+.stMarkdown .wb-badges li.earned .wb-badge-icon { filter: none; opacity: 1; background: radial-gradient(circle at 35% 30%, #ffffff, var(--aqua)); box-shadow: 0 0 0 3px var(--jade-deep); }
+.stMarkdown .wb-badges li.earned em { color: var(--jade-deep); }
+
+/* The badge moment */
+.stMarkdown .wb-pop { position: fixed; inset: 0; z-index: 999; pointer-events: none; display: grid; place-items: center; }
+.stMarkdown .wb-pop > div { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 26px 40px 24px; border-radius: 30px; background: var(--glass-strong); box-shadow: var(--shadow); animation: wb-card-pop 3.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
+.stMarkdown .wb-pop-icon { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; font-size: 2.8rem; background: radial-gradient(circle at 35% 30%, #ffffff, var(--aqua)); box-shadow: 0 0 0 4px var(--jade-deep), 0 0 0 0 rgba(95, 211, 208, 0.6); animation: wb-shine 1.4s 0.3s ease-out 2; }
+.stMarkdown .wb-pop p { margin: 8px 0 0; font-family: var(--mono); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--jade-deep); }
+.stMarkdown .wb-pop b { font-family: var(--serif); font-weight: 400; font-size: 1.8rem; color: var(--ink); }
+@keyframes wb-card-pop { 0% { opacity: 0; transform: scale(0.6); } 14% { opacity: 1; transform: scale(1.06); } 22%, 78% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(0.96) translateY(-12px); } }
+@keyframes wb-shine { from { box-shadow: 0 0 0 4px var(--jade-deep), 0 0 0 0 rgba(95, 211, 208, 0.6); } to { box-shadow: 0 0 0 4px var(--jade-deep), 0 0 0 28px rgba(95, 211, 208, 0); } }
+
+/* ---------- Phones: the world on top, panels scroll up over it ---------- */
+@media (max-width: 700px) {
+  [data-testid="stMainBlockContainer"] { padding: 0.8rem 0.8rem 2rem; }
+  .st-key-glass-top { border-radius: 26px; padding: 12px 14px; }
+  .st-key-nav button { min-width: 0 !important; padding: 0.4rem 0.55rem !important; font-size: 0.92rem; }
+  .st-key-nav [data-testid="stButtonGroup"] { flex-wrap: nowrap; }
+  .stMarkdown .wb-date { display: none; }
+  .st-key-hero [data-testid="stHorizontalBlock"]:has(.wb-bubble) { flex-direction: column-reverse; }
+  /* Inside the panel: gauge beside the reading, and the vessel buttons two by two. */
+  .st-key-glass-today [data-testid="stHorizontalBlock"] { flex-direction: row !important; flex-wrap: nowrap !important; gap: 10px; }
+  .st-key-glass-today [data-testid="stColumn"] { min-width: 0 !important; width: auto !important; flex: 1 1 0 !important; }
+  .st-key-glass-today [data-testid="stHorizontalBlock"]:has(.wb-gauge) > [data-testid="stColumn"]:first-child { flex: 0 0 92px !important; }
+  .st-key-glass-quest .wb-lead, .st-key-glass-quest .wb-h2 { display: none; }
+  .st-key-glass-quest { padding: 14px 16px; }
+  .stMarkdown .wb-count { font-size: 1.6rem; margin-top: 0; }
+  .stMarkdown .wb-bubble { margin: 36vh 0 0 4%; max-width: 270px; font-size: 1rem; }
+  [class*="st-key-glass"] { padding: 20px 18px; border-radius: 26px; }
+  .stMarkdown .wb-gauge { height: 260px; }
+  .stMarkdown .wb-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .stMarkdown .wb-stats div:nth-child(odd) { padding-left: 0; border-left: none; }
+  .st-key-drinks button { height: 74px; }
+  .st-key-glass-dock { right: 12px; bottom: 12px; width: calc(100vw - 24px); }
+  /* On Today and the welcome screen a swipe should scroll the page, not land in the spring. */
+  .st-key-stage iframe { pointer-events: none; }
+  [data-testid="stMainBlockContainer"], [data-testid="stMain"] [data-testid="stVerticalBlock"],
+  [data-testid="stMain"] [data-testid="stHorizontalBlock"], [data-testid="stMain"] [data-testid="stColumn"],
+  [data-testid="stMain"] [data-testid="stElementContainer"] { pointer-events: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [class*="st-key-glass"], .stMarkdown .wb-bubble, .wb-water, .wb-wave, .stMarkdown .wb-splash p,
+  [class*="st-key-age-"] button, .st-key-drinks button, .stMarkdown .wb-pop > div, .stMarkdown .wb-pop-icon,
+  .stMarkdown .wb-firefly, .stMarkdown .wb-petal, [data-testid="stToast"] { animation: none !important; transition: none !important; }
+  .stMarkdown .wb-splash i { display: none; }
+}

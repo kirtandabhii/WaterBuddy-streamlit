@@ -8,7 +8,7 @@ WaterBuddy helps you drink enough water each day, without pushing you to drink m
 2. Log drinks with one tap: water, tea, coffee, milk and more. The gauge, total, percentage and Ripple's 3D spring all update live.
 3. Look back on your week in **Insights**, collect **badges**, and choose a **theme** for Ripple's world.
 
-**Live app:** _add the Streamlit Cloud link here after deploying_
+**Live app:** https://waterbuddy-app-8fphrcq3pytveipfbz3fvy.streamlit.app/
 
 <p align="center">
   <img src="docs/today.jpg" width="820" alt="Today page: a staff gauge at 1,000 of 2,000 ml, drink-type pills, vessel buttons, and Ripple in the 3D spring saying 'Halfway there'">
